@@ -1,0 +1,35 @@
+{
+  "name": "ABDULLAH-MD",
+  "description": "⚡ ABDULLAH-MD - Advanced WhatsApp Multi-Device Bot with Multi-Session Support | Created by Tech Abdullah(AY BHATTI )—Dev",
+  "logo": "https://files.catbox.moe/9126wm.png",
+  "keywords": ["whatsapp-bot", "Abdullah-md", "baileys", "multi-device", "md-bot"],
+  "success_url": "/",
+  "env": {
+    "SESSION_ID": {
+      "description": "Your WhatsApp session ID. Get it from /pair endpoint or after pairing.",
+      "required": true,
+      "value": ""
+    },
+    "PREFIX": {
+      "description": "Command prefix for the bot (default: .)",
+      "required": false,
+      "value": "."
+    },
+    "MODE": {
+      "description": "Bot mode: public or private",
+      "required": false,
+      "value": "public"
+    },
+    "OWNER_NUMBER": {
+      "description": "Your WhatsApp number with country code (without +)",
+      "required": false,
+      "value": "923xxxxxxxxx"
+    }
+  },
+  "buildpacks": [
+    {
+      "url": "https://github.com/heroku/heroku-buildpack-nodejs.git"
+    }
+  ],
+  "stack": "heroku-24"
+}

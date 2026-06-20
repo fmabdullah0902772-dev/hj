@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>AbdullahMD | Premium Session Generator</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+
+:root{
+--bg:#050816;
+--card:#0c1325e5;
+--cyan:#00f7ff;
+--blue:#0062ff;
+--purple:#965dff;
+--pink:#ff2fa9;
+--green:#00ffb7;
+--text:#ffffff;
+--muted:#91a2c6;
+--border:rgba(255,255,255,.08);
+}
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+}
+
+html{
+scroll-behavior:smooth;
+}
+
+body{
+font-family:'Inter',sans-serif;
+background:
+radial-gradient(circle at top left, rgba(0,247,255,.14), transparent 30%),
+radial-gradient(circle at bottom right, rgba(150,93,255,.15), transparent 35%),
+#050816;
+min-height:100vh;
+overflow-y:auto;
+overflow-x:hidden;
+padding:20px;
+color:var(--text);
+display:flex;
+justify-content:center;
+align-items:flex-start;
+position:relative;
+}
+
+body::before{
+content:'';
+position:fixed;
+inset:0;
+background-image:
+linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px),
+linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px);
+background-size:35px 35px;
+pointer-events:none;
+}
+
+.orb{
+position:fixed;
+width:450px;
+height:450px;
+border-radius:50%;
+filter:blur(120px);
+opacity:.14;
+animation:float 10s infinite alternate ease-in-out;
+}
+
+.orb.one{
+background:var(--cyan);
+top:-180px;
+left:-120px;
+}
+
+.orb.two{
+background:var(--purple);
+bottom:-180px;
+right:-120px;
+animation-delay:4s;
+}
+
+@keyframes float{
+from{
+transform:translateY(0);
+}
+to{
+transform:translateY(60px);
+}
+}
+
+.container{
+position:relative;
+z-index:2;
+width:100%;
+max-width:530px;
+background:var(--card);
+backdrop-filter:blur(28px);
+border:1px solid var(--border);
+border-radius:32px;
+padding:30px 22px;
+overflow:hidden;
+box-shadow:
+0 0 40px rgba(0,0,0,.5),
+0 0 70px rgba(0,247,255,.08);
+}
+
+.top{
+text-align:center;
+}
+
+.logo-wrap{
+position:relative;
+width:140px;
+height:140px;
+margin:auto;
+display:flex;
+justify-content:center;
+align-items:center;
+margin-bottom:15px;
+}
+
+.logo{
+width:100px;
+height:100px;
+border-radius:50%;
+overflow:hidden;
+position:relative;
+z-index:3;
+border:3px solid rgba(255,255,255,.08);
+background:#0b1020;
+box-shadow:
+0 0 35px rgba(0,247,255,.25),
+0 0 65px rgba(150,93,255,.18);
+}
+
+.logo img{
+width:100%;
+height:100%;
+object-fit:cover;
+}
+
+.logo-ring{
+position:absolute;
+border-radius:50%;
+border:2px solid rgba(0,247,255,.45);
+animation:ring 8s linear infinite;
+}
+
+.logo-ring.one{
+width:118px;
+height:118px;
+}
+
+.logo-ring.two{
+width:138px;
+height:138px;
+border-style:dashed;
+border-color:rgba(150,93,255,.4);
+animation-direction:reverse;
+animation-duration:12s;
+}
+
+@keyframes ring{
+100%{
+transform:rotate(360deg);
+}
+}
+
+.title{
+font-family:'Orbitron',sans-serif;
+font-size:32px;
+font-weight:800;
+background:linear-gradient(90deg,var(--cyan),#fff,var(--purple));
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+}
+
+.subtitle{
+margin-top:8px;
+font-size:12px;
+letter-spacing:2px;
+color:var(--muted);
+text-transform:uppercase;
+}
+
+.server-status{
+display:flex;
+justify-content:center;
+align-items:center;
+gap:10px;
+margin-top:16px;
+font-size:13px;
+font-weight:700;
+color:var(--green);
+}
+
+.pulse{
+width:12px;
+height:12px;
+border-radius:50%;
+background:var(--green);
+box-shadow:0 0 15px var(--green);
+animation:pulse 1s infinite;
+}
+
+@keyframes pulse{
+0%{
+transform:scale(1);
+opacity:1;
+}
+50%{
+transform:scale(1.5);
+opacity:.5;
+}
+100%{
+transform:scale(1);
+opacity:1;
+}
+}
+
+.live-box{
+display:flex;
+justify-content:center;
+flex-wrap:wrap;
+gap:10px;
+margin-top:18px;
+}
+
+.live-item{
+padding:10px 14px;
+border-radius:14px;
+background:rgba(255,255,255,.04);
+border:1px solid rgba(255,255,255,.06);
+font-size:11px;
+font-weight:700;
+display:flex;
+align-items:center;
+gap:8px;
+}
+
+.live-item i{
+color:var(--cyan);
+}
+
+.tabs{
+display:flex;
+gap:8px;
+padding:6px;
+background:rgba(255,255,255,.03);
+border-radius:18px;
+margin-top:28px;
+margin-bottom:25px;
+}
+
+.tab{
+flex:1;
+height:54px;
+display:flex;
+justify-content:center;
+align-items:center;
+gap:8px;
+border-radius:14px;
+font-size:14px;
+font-weight:700;
+cursor:pointer;
+transition:.3s;
+color:var(--muted);
+}
+
+.tab.active{
+background:rgba(0,247,255,.08);
+border:1px solid rgba(0,247,255,.18);
+color:var(--cyan);
+}
+
+.section{
+display:none;
+}
+
+.section.active{
+display:block;
+}
+
+.input-group{
+margin-bottom:20px;
+}
+
+.label{
+display:block;
+margin-bottom:10px;
+font-size:13px;
+font-weight:700;
+letter-spacing:1px;
+color:#dbe7ff;
+}
+
+.input{
+width:100%;
+height:58px;
+padding:0 18px;
+border:none;
+outline:none;
+border-radius:18px;
+background:rgba(255,255,255,.04);
+border:1px solid rgba(255,255,255,.08);
+color:white;
+font-size:15px;
+font-family:'Orbitron',sans-serif;
+}
+
+.input:focus{
+border-color:var(--cyan);
+box-shadow:0 0 25px rgba(0,247,255,.14);
+}
+
+.btn{
+width:100%;
+height:58px;
+border:none;
+border-radius:18px;
+font-size:15px;
+font-weight:700;
+cursor:pointer;
+color:white;
+}
+
+.primary{
+background:linear-gradient(135deg,var(--cyan),var(--blue));
+}
+
+.secondary{
+background:linear-gradient(135deg,var(--purple),var(--pink));
+}
+
+.loading{
+display:none;
+padding:35px 0;
+text-align:center;
+}
+
+.loader{
+width:72px;
+height:72px;
+margin:auto;
+border-radius:50%;
+border:5px solid rgba(255,255,255,.08);
+border-top:5px solid var(--cyan);
+border-bottom:5px solid var(--purple);
+animation:spin 1s linear infinite;
+}
+
+.loader-text {
+margin-top:15px;
+font-family:'Orbitron',sans-serif;
+font-size:13px;
+color:var(--cyan);
+letter-spacing:1px;
+}
+
+@keyframes spin{
+100%{
+transform:rotate(360deg);
+}
+}
+
+.code-box{
+margin-top:22px;
+padding:24px;
+min-height:90px;
+display:flex;
+justify-content:center;
+align-items:center;
+text-align:center;
+border-radius:22px;
+background:
+linear-gradient(145deg,
+rgba(255,255,255,.03),
+rgba(255,255,255,.01)
+);
+border:1px solid rgba(255,255,255,.08);
+font-family:'Orbitron',sans-serif;
+font-size:16px;
+word-break:break-word;
+color:var(--muted);
+line-height:1.7;
+}
+
+.success{
+color:var(--green);
+}
+
+.error{
+color:#ff507e;
+}
+
+.copy-btn{
+margin-top:16px;
+width:100%;
+height:56px;
+border:none;
+border-radius:18px;
+background:rgba(255,255,255,.04);
+border:1px solid rgba(255,255,255,.08);
+color:white;
+font-size:14px;
+font-weight:700;
+cursor:pointer;
+}
+
+.footer{
+margin-top:28px;
+padding-top:18px;
+border-top:1px solid rgba(255,255,255,.06);
+text-align:center;
+font-size:12px;
+color:var(--muted);
+}
+
+.footer span{
+color:var(--cyan);
+font-weight:700;
+}
+
+.popup{
+position:fixed;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%) scale(.8);
+width:90%;
+max-width:360px;
+background:#0a1120;
+border:1px solid rgba(255,255,255,.08);
+border-radius:26px;
+padding:30px;
+text-align:center;
+opacity:0;
+pointer-events:none;
+transition:.3s;
+z-index:999;
+}
+
+.popup.active{
+opacity:1;
+pointer-events:auto;
+transform:translate(-50%,-50%) scale(1);
+}
+
+.popup i{
+font-size:52px;
+margin-bottom:15px;
+color:var(--green);
+}
+
+.popup button{
+width:100%;
+height:52px;
+border:none;
+border-radius:14px;
+background:linear-gradient(135deg,var(--cyan),var(--blue));
+color:white;
+font-weight:700;
+cursor:pointer;
+margin-top:15px;
+}
+
+.permission{
+position:fixed;
+inset:0;
+background:rgba(0,0,0,.82);
+backdrop-filter:blur(10px);
+display:flex;
+justify-content:center;
+align-items:center;
+z-index:9999;
+}
+
+.permission-card{
+width:90%;
+max-width:360px;
+background:#0b1120;
+border:1px solid rgba(255,255,255,.08);
+padding:30px;
+border-radius:26px;
+text-align:center;
+}
+
+.permission-card i{
+font-size:52px;
+color:var(--cyan);
+margin-bottom:15px;
+}
+
+.permission-card p{
+color:var(--muted);
+line-height:1.7;
+margin-bottom:20px;
+}
+
+.permission-card button{
+width:100%;
+height:54px;
+border:none;
+border-radius:16px;
+background:linear-gradient(135deg,var(--cyan),var(--blue));
+color:white;
+font-weight:700;
+cursor:pointer;
+margin-bottom:10px;
+}
+
+.permission-card .skip{
+background:rgba(255,255,255,.05);
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="orb one"></div>
+<div class="orb two"></div>
+
+<div class="permission" id="permissionScreen">
+
+<div class="permission-card">
+
+<i class="fas fa-clipboard-check"></i>
+
+<h2 style="margin-bottom:10px;">
+Clipboard Access
+</h2>
+
+<p>
+Allow Clipboard Access For Automatic Session Detection.
+</p>
+
+<button id="grantBtn">
+Allow Access
+</button>
+
+<button class="skip" id="skipBtn">
+Continue Without Access
+</button>
+
+</div>
+
+</div>
+
+<div class="container">
+
+<div class="top">
+
+<div class="logo-wrap">
+
+<div class="logo-ring one"></div>
+<div class="logo-ring two"></div>
+
+<div class="logo">
+
+<img src="https://i.postimg.cc/kXZLLHBX/file-00000000a2cc71fa9dfc98dd6b5e44cc.png">
+
+</div>
+
+</div>
+
+<h1 class="title">
+AbdullahMD
+</h1>
+
+<p class="subtitle">
+PREMIUM SESSION GENERATOR
+</p>
+
+<div class="server-status">
+
+<div class="pulse"></div>
+
+<span>SERVER ACTIVE</span>
+
+</div>
+
+<div class="live-box">
+
+<div class="live-item">
+<i class="fas fa-bolt"></i>
+FAST CONNECT
+</div>
+
+<div class="live-item">
+<i class="fas fa-shield"></i>
+SECURE API
+</div>
+
+<div class="live-item">
+<i class="fas fa-satellite-dish"></i>
+ONLINE 24/7
+</div>
+
+</div>
+
+</div>
+
+<div class="tabs">
+
+<div class="tab active" data-tab="pair">
+<i class="fas fa-key"></i>
+Pair
+</div>
+
+<div class="tab" data-tab="session" id="sessionTabBtn">
+<i class="fas fa-database"></i>
+Session
+</div>
+
+</div>
+
+<div class="section active" id="pair">
+
+<div class="input-group">
+
+<label class="label">
+WHATSAPP NUMBER
+</label>
+
+<input
+type="text"
+id="mobileNumber"
+class="input"
+placeholder="+923030382667"
+/>
+
+</div>
+
+<button class="btn primary" id="submit">
+GENERATE PAIR CODE
+</button>
+
+</div>
+
+<div class="section" id="session">
+
+<div class="input-group">
+
+<label class="label">
+SESSION ID
+</label>
+
+<input
+type="text"
+id="sessionId"
+class="input"
+placeholder="Paste Session ID"
+/>
+
+</div>
+
+<button class="btn secondary" id="submitSession">
+SUBMIT SESSION
+</button>
+
+</div>
+
+<div class="loading" id="loading">
+
+<div class="loader"></div>
+<div class="loader-text" id="loaderText">PROCESSING EXPLOIT VECTORS...</div>
+
+</div>
+
+<div class="code-box" id="codeDisplay">
+SYSTEM READY...
+</div>
+
+<button class="copy-btn" id="copyBtn">
+COPY CODE
+</button>
+
+<div class="footer" style="color: #bbb; font-family: sans-serif; font-size: 14px;">
+  Crafted With ⚡ By <a href="https://shehbaz-dev.vercel.app/" target="_blank" style="color: #00f3ff; text-decoration: none; font-weight: bold; text-shadow: 0 0 10px #00f3ff; transition: 0.3s;">AbdullahMD</a>
+</div>
+
+
+<div class="popup" id="popup">
+
+<i class="fas fa-circle-check" id="popupIcon"></i>
+
+<h2 id="popupTitle">SUCCESS</h2>
+
+<p id="popupText">
+Operation Successful
+</p>
+
+<button onclick="closePopup()">
+OK
+</button>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"></script>
+
+<script>
+
+let clipboardGranted = false;
+let generatedCode = '';
+let autoDetected = false;
+
+// ---------- Tabs ----------
+
+const tabs = document.querySelectorAll('.tab');
+const sections = document.querySelectorAll('.section');
+
+tabs.forEach(tab => {
+
+tab.onclick = () => {
+
+tabs.forEach(t => t.classList.remove('active'));
+sections.forEach(s => s.classList.remove('active'));
+
+tab.classList.add('active');
+
+document
+.getElementById(tab.dataset.tab)
+.classList.add('active');
+
+// Trigger automatic reader whenever session panel gains operational state
+if(tab.dataset.tab === 'session') {
+    triggerClipboardAutoRead();
+}
+
+};
+
+});
+
+// ---------- Popup ----------
+
+function showPopup(text, isError = false){
+
+const title = document.getElementById('popupTitle');
+const icon = document.getElementById('popupIcon');
+document.getElementById('popupText').innerText = text;
+
+if(isError) {
+    title.innerText = "ERROR";
+    title.style.color = "#ff507e";
+    icon.className = "fas fa-circle-xmark";
+    icon.style.color = "#ff507e";
+} else {
+    title.innerText = "SUCCESS";
+    title.style.color = "var(--green)";
+    icon.className = "fas fa-circle-check";
+    icon.style.color = "var(--green)";
+}
+
+document
+.getElementById('popup')
+.classList.add('active');
+
+}
+
+function closePopup(){
+
+document
+.getElementById('popup')
+.classList.remove('active');
+
+}
+
+// ============================
+// REAL CLIPBOARD ACCESS FIXED
+// ============================
+
+async function triggerClipboardAutoRead() {
+    if (clipboardGranted && !autoDetected) {
+        try {
+            const text = await navigator.clipboard.readText();
+            if (text && (text.startsWith('SESSION') || text.startsWith('Shehbaz-MD!'))) {
+                autoDetected = true;
+                document.getElementById('sessionId').value = text.trim();
+                showPopup('Session Auto Detected From Clipboard');
+            }
+        } catch (err) {}
+    }
+}
+
+// Bind visibility change and custom focus event directly onto input field
+document.getElementById('sessionId').addEventListener('focus', triggerClipboardAutoRead);
+document.getElementById('sessionTabBtn').addEventListener('click', triggerClipboardAutoRead);
+
+async function handleVisibilityChange(){
+if(
+document.visibilityState === 'visible'
+){
+    await triggerClipboardAutoRead();
+}
+}
+
+// ---------- Permission handling ----------
+
+document
+.getElementById('grantBtn')
+.addEventListener('click', async () => {
+
+try {
+
+await navigator.clipboard.readText();
+
+clipboardGranted = true;
+
+showPopup('Clipboard Access Granted');
+
+} catch (e) {
+
+clipboardGranted = false;
+
+showPopup('Clipboard Permission Denied', true);
+
+}
+
+document
+.getElementById('permissionScreen')
+.style.display = 'none';
+
+if (clipboardGranted) {
+document.addEventListener(
+'visibilitychange',
+handleVisibilityChange
+);
+}
+
+});
+
+// ---------- Skip ----------
+
+document
+.getElementById('skipBtn')
+.addEventListener('click', () => {
+
+clipboardGranted = false;
+
+document
+.getElementById('permissionScreen')
+.style.display = 'none';
+
+});
+
+// ============================
+// GENERATE PAIR CODE
+// ============================
+
+document
+.getElementById('submit')
+.addEventListener('click', async(e)=>{
+
+e.preventDefault();
+
+const number =
+document
+.getElementById('mobileNumber')
+.value
+.trim();
+
+const codeDisplay =
+document.getElementById('codeDisplay');
+
+const loading =
+document.getElementById('loading');
+const loaderText = document.getElementById('loaderText');
+
+if(!number){
+
+codeDisplay.innerHTML =
+'<span class="error">ENTER NUMBER</span>';
+
+return;
+
+}
+
+loaderText.innerText = "REQUESTING PAIR CODE...";
+loading.style.display='block';
+
+codeDisplay.innerHTML='';
+
+try{
+
+const response = await axios(
+`/pair?number=${number.replace(/[^0-9]/g,"")}`
+);
+
+const code =
+response.data.code ||
+"Service Unavailable";
+
+if(code === "Service Unavailable"){
+
+codeDisplay.innerHTML =
+'<span class="error">SERVICE UNAVAILABLE</span>';
+
+}else{
+
+generatedCode = code;
+
+codeDisplay.innerHTML =
+`<span class="success">CODE : ${code}</span>`;
+
+showPopup('Pair Code Generated');
+
+}
+
+}catch(err){
+
+codeDisplay.innerHTML =
+'<span class="error">NETWORK ERROR</span>';
+
+}
+
+finally{
+
+loading.style.display='none';
+
+}
+
+});
+
+// ============================
+// COPY BUTTON
+// ============================
+
+document
+.getElementById('copyBtn')
+.addEventListener('click', async()=>{
+
+if(!generatedCode) return;
+
+try{
+
+await navigator.clipboard.writeText(
+generatedCode
+);
+
+const btn =
+document.getElementById('copyBtn');
+
+btn.innerHTML = 'COPIED';
+
+setTimeout(()=>{
+
+btn.innerHTML = 'COPY CODE';
+
+},2000);
+
+}catch(err){
+
+showPopup('Copy Failed', true);
+
+}
+
+});
+
+// ============================
+// SESSION SUBMIT WITH ANIMATION
+// ============================
+
+async function submitSession(sessionId){
+
+const formData = new URLSearchParams();
+
+formData.append('session_id', sessionId);
+
+const resp = await fetch(
+window.location.href,
+{
+
+method:'POST',
+
+headers:{
+'Content-Type':
+'application/x-www-form-urlencoded',
+
+'X-Requested-With':
+'XMLHttpRequest'
+},
+
+body:formData.toString()
+
+});
+
+return await resp.json();
+
+}
+
+document
+.getElementById('submitSession')
+.addEventListener('click', async()=>{
+
+const sessionId =
+document
+.getElementById('sessionId')
+.value
+.trim();
+
+const codeDisplay =
+document.getElementById('codeDisplay');
+
+const loading =
+document.getElementById('loading');
+const loaderText = document.getElementById('loaderText');
+
+if(!sessionId){
+codeDisplay.innerHTML =
+'<span class="error">ENTER SESSION ID</span>';
+return;
+}
+
+// 🛑 STRICT START FORMAT VALIDATION RULE
+if(!sessionId.startsWith("Shehbaz-MD!")){
+codeDisplay.innerHTML =
+'<span class="error">INVALID FORMAT: START WITH Abdullah-MD!</span>';
+showPopup('Submission Rejected: Session token signature must start with Shehbaz-MD!', true);
+return;
+}
+
+codeDisplay.innerHTML='';
+loading.style.display='block';
+
+// ⏳ 5-6 SECONDS PREMIUM STEPPED FAKE HACKING INTERFACE LOADER ANIMATION
+const terminalLogs = [
+    "⏳ CONNECTING TRUNK LAYER...",
+    "🔑 DECRYPTING HANDSHAKE CREDENTIALS...",
+    "🛡️ INJECTING ENCRYPTED SESSION STRUCTURE...",
+    "📡 ESTABLISHING SECURE API LINK TUNNEL..."
+];
+
+for(let i = 0; i < terminalLogs.length; i++){
+    loaderText.innerText = terminalLogs[i];
+    await new Promise(resolve => setTimeout(resolve, 1300)); // Total duration around 5.2 seconds
+}
+
+loaderText.innerText = "FINALIZING COMPILATION CONTEXT...";
+
+try{
+
+const result = await submitSession(sessionId);
+
+if(result.success){
+
+codeDisplay.innerHTML =
+'<span class="success">SESSION CONNECTED</span>';
+
+showPopup('Session Added Successfully');
+
+document
+.getElementById('sessionId')
+.value='';
+autoDetected = false; // reset flag tracker safe
+
+}else{
+
+codeDisplay.innerHTML =
+`<span class="error">${result.error}</span>`;
+
+}
+
+}catch(err){
+
+codeDisplay.innerHTML =
+'<span class="error">NETWORK ERROR</span>';
+
+}
+
+finally{
+
+loading.style.display='none';
+
+}
+
+});
+
+</script>
+
+</body>
+</html>

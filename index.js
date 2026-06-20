@@ -639,6 +639,3 @@ process.on('SIGINT', async () => {
 start().catch(console.error);
 
 export default app;
-
-
-bhai ye mera bot ka index file h ismy se ye session id wala system khtm krdyn just normal pair ho or bot chl prhy

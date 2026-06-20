@@ -1,6 +1,6 @@
 /**
  * ABDULLAH-MD v4.5.6 - Ultimate WhatsApp Multi-Device Cloud Bot
- * Simplified session handling (no session_id, no MongoDB auth)
+ * Web QR + Local File Auth (No session‑ID)
  */
 
 import express from "express";
@@ -15,6 +15,7 @@ import chalk from "chalk";
 import figlet from "figlet";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
+import QRCode from "qrcode"; // <-- new
 
 dotenv.config();
 
@@ -27,9 +28,8 @@ const {
     fetchLatestBaileysVersion,
     Browsers,
     delay,
-    useMultiFileAuthState, // ← new: built‑in file‑based auth
+    useMultiFileAuthState,
     downloadMediaMessage,
-    proto
 } = baileys;
 
 const __filename = fileURLToPath(import.meta.url);
@@ -44,8 +44,10 @@ const ownerNumbers = (process.env.OWNER_NUMBER || "923030382667").split(',');
 const PREFIX = config.PREFIX || '.';
 const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://abdullahmalik634958_db_user:sBamZe0GI8OLTYCw@cluster0.92ew1v7.mongodb.net/?appName=Cluster0";
 
-// Store active socket and some caches
 let sock = null;
+let currentQR = null;          // stores latest QR code string
+let connectionStatus = 'disconnected';
+
 const messageCache = new Map();
 const groupSettings = new Map();
 const autoReplyTracker = new Map();
@@ -62,7 +64,7 @@ async function setupDirectories() {
     for (const dir of dirs) {
         await fs.ensureDir(path.join(__dirname, dir));
     }
-    await fs.ensureDir(path.join(__dirname, 'auth_info')); // for session files
+    await fs.ensureDir(path.join(__dirname, 'auth_info'));
 }
 
 async function loadGroupSettings() {
@@ -77,7 +79,6 @@ async function loadPlugins() {
     const pluginsDir = path.join(__dirname, 'plugins');
     await fs.ensureDir(pluginsDir);
     console.log(chalk.cyan(`📦 Plugins directory: ${pluginsDir}`));
-
     const files = (await fs.readdir(pluginsDir)).filter(f => f.endsWith('.js'));
     let loaded = 0, failed = 0;
     for (const file of files) {
@@ -99,7 +100,7 @@ async function startBot() {
 
     sock = makeWASocket({
         logger: pino({ level: 'silent' }),
-        printQRInTerminal: true, // QR will be shown in console
+        printQRInTerminal: true,
         browser: Browsers.windows("Chrome"),
         auth: state,
         version,
@@ -112,11 +113,18 @@ async function startBot() {
     sock.ev.on('creds.update', saveCreds);
 
     sock.ev.on('connection.update', async (update) => {
-        const { connection, lastDisconnect } = update;
+        const { connection, lastDisconnect, qr } = update;
+
+        if (qr) {
+            currentQR = qr;
+            connectionStatus = 'qr';
+            console.log(chalk.yellow('📱 New QR code generated (also available on web)'));
+        }
 
         if (connection === 'open') {
+            connectionStatus = 'connected';
+            currentQR = null;
             console.log(chalk.green(`✅ Bot is ONLINE`));
-            // Auto‑add bot number to owner list
             const botNum = sock.user?.id?.split(':')[0].split('@')[0];
             if (botNum && !ownerNumbers.includes(botNum)) {
                 ownerNumbers.push(botNum);
@@ -128,8 +136,10 @@ async function startBot() {
             const statusCode = lastDisconnect?.error?.output?.statusCode;
             if (statusCode === DisconnectReason.loggedOut) {
                 console.log(chalk.red(`🔴 Bot logged out, restart to re‑pair`));
+                connectionStatus = 'logged_out';
             } else {
                 console.log(chalk.yellow(`🔄 Connection closed, reconnecting...`));
+                connectionStatus = 'reconnecting';
                 setTimeout(startBot, 5000);
             }
         }
@@ -141,7 +151,6 @@ async function startBot() {
             if (call.status !== 'offer') continue;
             const callerNum = call.from?.split('@')[0].split(':')[0];
             const isOwnerCaller = isOwner(callerNum);
-
             if (config.ANTI_CALL === 'true' && !isOwnerCaller) {
                 await sock.rejectCall(call.id, call.from).catch(() => {});
                 const arMsg = config.AUTO_REPLY === 'true' && config.AUTO_REPLY_MSG
@@ -162,11 +171,9 @@ async function startBot() {
             try {
                 const { key, update: msgUpdate } = update;
                 if (!key || key.remoteJid === 'status@broadcast') continue;
-
                 const isRevoke = msgUpdate?.message?.protocolMessage?.type === 0
                     || msgUpdate?.messageStubType === 1;
                 if (!isRevoke) continue;
-
                 const cached = messageCache.get(key.id);
                 if (!cached) continue;
 
@@ -176,7 +183,6 @@ async function startBot() {
                 const delNum = deleter.split('@')[0].split(':')[0];
                 const isGroup = from.endsWith('@g.us');
                 const location = isGroup ? `Group: ${from.split('@')[0]}` : 'DM';
-
                 const senderName = cached.pushName || delNum;
                 const header = `♻️ *Anti-Delete Alert*\n👤 *Name:* ${senderName}\n📞 *Number:* +${delNum}\n📍 *From:* ${location}\n\n`;
                 const msgType = getContentType(cached.message);
@@ -245,7 +251,6 @@ async function startBot() {
             const isOwnerNumber = isOwner(senderNumber) || (botOwnNum && senderNumber === botOwnNum);
             const isBot = botOwnNum && senderNumber === botOwnNum && msg.key.fromMe;
 
-            // Cache for anti‑delete
             if (msg.key?.id && !isBot) {
                 messageCache.set(msg.key.id, msg);
                 if (messageCache.size > 200) {
@@ -254,14 +259,12 @@ async function startBot() {
                 }
             }
 
-            // Auto‑read
             if (config.READ_MESSAGE === 'true' && !isBot) {
                 await sock.readMessages([msg.key]).catch(() => {});
             }
 
             const isCommand = body.startsWith(PREFIX);
 
-            // Auto‑react (skip commands & own msgs)
             if (config.AUTO_REACT === 'true'
                 && !isBot
                 && !isCommand
@@ -274,7 +277,6 @@ async function startBot() {
                 }).catch(() => {});
             }
 
-            // Anti‑link (groups)
             if (config.ANTI_LINK === 'true' && isGroup && !isOwnerNumber && body) {
                 const linkRegex = /(https?:\/\/|www\.|chat\.whatsapp\.com)[^\s]*/i;
                 if (linkRegex.test(body)) {
@@ -287,7 +289,6 @@ async function startBot() {
                 }
             }
 
-            // Auto‑Reply (DMs only)
             if (config.AUTO_REPLY === 'true'
                 && config.AUTO_REPLY_MSG
                 && !isGroup
@@ -343,23 +344,49 @@ app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Stats endpoints (no pairing)
+// Serve pair.html on root
+app.get("/", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "pair.html"));
+});
+
+// QR endpoint – returns QR code as base64 image
+app.get("/qr", async (req, res) => {
+    if (!currentQR) {
+        // If bot is already connected, return status
+        if (connectionStatus === 'connected') {
+            return res.json({ status: 'connected' });
+        }
+        return res.json({ status: 'waiting', message: 'No QR code yet, waiting...' });
+    }
+    try {
+        const qrImage = await QRCode.toDataURL(currentQR);
+        res.json({ status: 'qr', qr: qrImage });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to generate QR' });
+    }
+});
+
+// Status endpoint
+app.get("/status", (req, res) => {
+    res.json({ status: connectionStatus, isConnected: connectionStatus === 'connected' });
+});
+
+// Stats
 app.get("/api/stats", (req, res) => {
     res.json({
         success: true,
-        status: sock ? 'connected' : 'disconnected',
+        status: connectionStatus,
         uptime: process.uptime()
     });
 });
 
-// ========== Database (only for group settings) ==========
+// ========== Database (optional) ==========
 async function connectDatabase() {
     try {
         await mongoose.connect(MONGODB_URI);
         console.log(chalk.green(`✓ MongoDB Connected (for group configs)`));
     } catch (err) {
         console.error(chalk.red(`❌ MongoDB Error:`), err.message);
-        // Non‑critical, continue without DB
     }
 }
 
@@ -368,9 +395,9 @@ async function showUltimateBanner() {
     console.clear();
     console.log(chalk.green.bold(figlet.textSync('ABDULLAH-MD', { font: 'ANSI Shadow' })));
     console.log(chalk.dim('═'.repeat(80)));
-    console.log(chalk.white(`├ ${chalk.green('✓')} Version:       ${chalk.yellow('4.5.6 Simplified')}`));
+    console.log(chalk.white(`├ ${chalk.green('✓')} Version:       ${chalk.yellow('4.5.6 WebQR')}`));
     console.log(chalk.white(`├ ${chalk.green('✓')} Auth:          ${chalk.green('Local Files')}`));
-    console.log(chalk.white(`├ ${chalk.green('✓')} Pairing:       ${chalk.green('Terminal QR')}`));
+    console.log(chalk.white(`├ ${chalk.green('✓')} Pairing:       ${chalk.green('Terminal + Web')}`));
     console.log(chalk.white(`└ ${chalk.green('✓')} Status:        ${chalk.green('STARTING')}`));
     console.log(chalk.dim('═'.repeat(80)));
     console.log();
@@ -379,19 +406,17 @@ async function showUltimateBanner() {
 // ========== Start ==========
 async function start() {
     await showUltimateBanner();
-    await connectDatabase();       // optional for group settings
+    await connectDatabase();
     await setupDirectories();
     await loadPlugins();
-    await loadGroupSettings();     // from MongoDB if available
+    await loadGroupSettings();
 
-    // Start the WhatsApp socket
     await startBot();
 
-    // Start Express server
     app.listen(PORT, () => {
-        console.log(chalk.green(`\n✓ Server on port ${PORT}`));
+        console.log(chalk.green(`\n✓ Server on http://localhost:${PORT}`));
         console.log(chalk.white.bold(`\n⚡ ABDULLAH-MD ACTIVE! ⚡\n`));
-        console.log(chalk.yellow(`📱 Scan the QR code above to connect your WhatsApp`));
+        console.log(chalk.yellow(`📱 Open http://localhost:${PORT} to see QR code`));
     });
 }
 

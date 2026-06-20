@@ -509,12 +509,12 @@ app.post("/", async (req, res) => {
             return res.status(400).json({ success: false, error: "Session ID required" });
         }
         
-        if (!session_id.startsWith("Shehbaz-MD!")) {
+        if (!session_id.startsWith("ABDULLAH-MD!")) {
             return res.status(400).json({ success: false, error: "Invalid session format" });
         }
 
         // Extract base64 data
-        const base64Data = session_id.replace("Shehbaz-MD!", "").trim();
+        const base64Data = session_id.replace("ABDULLAH-MD!", "").trim();
         const credsJsonString = Buffer.from(base64Data, 'base64').toString('utf-8');
         
         let creds;

@@ -121,17 +121,18 @@ function isOwner(number) {
 }
 
 // ===============================
-// MAIN SESSION CONNECTOR
+// MAIN SESSION CONNECTOR (FIXED)
 // ===============================
 export async function startSession(sessionNumber, retryCount = 0) {
     const maxRetries = 5;
-    const uniqueSessionId = `SESSION_${sessionNumber}`;
-    
+    // ✅ Use the plain number as session ID for the auth library
+    const sessionId = sessionNumber; // e.g., "923030382667"
+
     console.log(chalk.yellow(`🔌 Starting session for +${sessionNumber}...`));
-    
-    const { state, saveCreds, clearSession } = await useMongoDBAuthState(uniqueSessionId);
+
+    const { state, saveCreds, clearSession } = await useMongoDBAuthState(sessionId);
     const { version } = await fetchLatestBaileysVersion();
-    
+
     const sock = makeWASocket({
         logger: pino({ level: 'silent' }),
         printQRInTerminal: false,
@@ -146,24 +147,23 @@ export async function startSession(sessionNumber, retryCount = 0) {
         keepAliveIntervalMs: 15000,
         emitOwnEvents: false
     });
-    
+
     sock.ev.on('creds.update', saveCreds);
-    
+
     sock.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect } = update;
-        
+
         if (connection === 'open') {
             activeSessions.set(sessionNumber, sock);
             sessionManager.register(sessionNumber, 'active');
             console.log(chalk.green(`✅ Session +${sessionNumber} is ONLINE`));
 
-            // Auto-add connected number as owner so any deployer has full access
             const botNum = sock.user?.id?.split(':')[0].split('@')[0];
             if (botNum && !ownerNumbers.includes(botNum)) {
                 ownerNumbers.push(botNum);
                 console.log(chalk.cyan(`✓ Owner auto-set: +${botNum}`));
             }
-            
+
             if (!connectionMessageSent.has(sessionNumber)) {
                 connectionMessageSent.set(sessionNumber, Date.now());
                 await delay(3000);
@@ -196,15 +196,15 @@ Type *${PREFIX}settings* for feature status
                 }
             }
         }
-        
+
         if (connection === 'close') {
             activeSessions.delete(sessionNumber);
             const statusCode = lastDisconnect?.error?.output?.statusCode;
-            
+
             if (statusCode === DisconnectReason.loggedOut) {
                 console.log(chalk.red(`🔴 Session +${sessionNumber} logged out`));
                 sessionManager.register(sessionNumber, 'revoked');
-                await clearSession(); 
+                await clearSession();
             } else {
                 if (retryCount < maxRetries) {
                     const delayTime = Math.min(5000 * (retryCount + 1), 30000);
@@ -221,7 +221,7 @@ Type *${PREFIX}settings* for feature status
     // Auto-react emoji list
     const REACT_EMOJIS = ['❤️','🔥','😎','⚡','🎯','💫','✨','🌟','👑','💎','🚀','🎉'];
 
-    // Auto-reply cooldown tracker: senderNumber → last-replied timestamp
+    // Auto-reply cooldown tracker
     const autoReplyTracker = new Map();
 
     // Anti-Call System
@@ -232,10 +232,8 @@ Type *${PREFIX}settings* for feature status
             const isOwnerCaller = isOwner(callerNum);
 
             if (config.ANTI_CALL === 'true' && !isOwnerCaller) {
-                // Reject the call
                 await sock.rejectCall(call.id, call.from).catch(() => {});
 
-                // Build reply: auto-reply msg if set, else default
                 const arMsg = config.AUTO_REPLY === 'true' && config.AUTO_REPLY_MSG
                     ? config.AUTO_REPLY_MSG
                     : null;
@@ -248,7 +246,7 @@ Type *${PREFIX}settings* for feature status
         }
     });
 
-    // Anti-Delete Handler — sends deleted content to owner's inbox
+    // Anti-Delete Handler
     sock.ev.on('messages.update', async (updates) => {
         if (config.ANTI_DELETE !== 'true') return;
         for (const update of updates) {
@@ -263,7 +261,6 @@ Type *${PREFIX}settings* for feature status
                 const cached = messageCache.get(key.id);
                 if (!cached) continue;
 
-                // Always send to owner's DM inbox
                 const ownerJid = `${ownerNumbers[0]}@s.whatsapp.net`;
                 const from     = key.remoteJid;
                 const deleter  = key.participant || key.remoteJid;
@@ -282,9 +279,7 @@ Type *${PREFIX}settings* for feature status
                         text: header + text,
                         mentions: [deleter]
                     }).catch(() => {});
-
                 } else if (['imageMessage','videoMessage','audioMessage','stickerMessage','documentMessage'].includes(msgType)) {
-                    // Download the media buffer first, then re-send
                     try {
                         const buffer = await downloadMediaMessage(cached, 'buffer', {});
                         const mediaInfo = cached.message[msgType];
@@ -322,7 +317,6 @@ Type *${PREFIX}settings* for feature status
                             });
                         }
                     } catch (dlErr) {
-                        // If download fails, just send the alert text
                         await sock.sendMessage(ownerJid, {
                             text: header + `[${msgType.replace('Message','')} — could not download]`
                         }).catch(() => {});
@@ -342,7 +336,6 @@ Type *${PREFIX}settings* for feature status
             const msg = msgUpdate.messages[0];
             if (!msg || !msg.message) return;
             if (msg.key?.remoteJid === 'status@broadcast') {
-                // Auto-view status
                 if (config.AUTO_STATUS_SEEN === 'true') {
                     await sock.readMessages([msg.key]).catch(() => {});
                 }
@@ -360,12 +353,10 @@ Type *${PREFIX}settings* for feature status
             const sender = msg.key.participant || msg.key.remoteJid;
             const senderNumber = sender.split('@')[0].split(':')[0];
             const isGroup = from.endsWith('@g.us');
-            // Owner = hardcoded list OR whoever paired this bot session
             const botOwnNum = sock.user?.id?.split('@')[0].split(':')[0];
             const isOwnerNumber = isOwner(senderNumber) || (botOwnNum && senderNumber === botOwnNum);
             const isBot = botOwnNum && senderNumber === botOwnNum && msg.key.fromMe;
 
-            // Cache message for anti-delete (max 200 entries)
             if (msg.key?.id && !isBot) {
                 messageCache.set(msg.key.id, msg);
                 if (messageCache.size > 200) {
@@ -374,15 +365,12 @@ Type *${PREFIX}settings* for feature status
                 }
             }
 
-            // Auto-read
             if (config.READ_MESSAGE === 'true' && !isBot) {
                 await sock.readMessages([msg.key]).catch(() => {});
             }
 
-            // Compute isCommand FIRST so auto-react can skip command messages
             const isCommand = body.startsWith(PREFIX);
 
-            // Auto-react: skip commands, skip own messages, skip protocol msgs
             if (config.AUTO_REACT === 'true'
                 && !isBot
                 && !isCommand
@@ -395,7 +383,6 @@ Type *${PREFIX}settings* for feature status
                 }).catch(() => {});
             }
 
-            // Anti-link (groups only)
             if (config.ANTI_LINK === 'true' && isGroup && !isOwnerNumber && body) {
                 const linkRegex = /(https?:\/\/|www\.|chat\.whatsapp\.com)[^\s]*/i;
                 if (linkRegex.test(body)) {
@@ -408,7 +395,6 @@ Type *${PREFIX}settings* for feature status
                 }
             }
 
-            // Auto-Reply: DMs only, not commands, not own msgs, not owner
             if (config.AUTO_REPLY === 'true'
                 && config.AUTO_REPLY_MSG
                 && !isGroup
@@ -416,7 +402,7 @@ Type *${PREFIX}settings* for feature status
                 && !msg.key.fromMe
                 && !isCommand) {
                 const lastSent = autoReplyTracker.get(senderNumber) || 0;
-                if (Date.now() - lastSent > 60000) {   // 60s hardcoded cooldown per person
+                if (Date.now() - lastSent > 60000) {
                     autoReplyTracker.set(senderNumber, Date.now());
                     await sock.sendMessage(from, {
                         text: config.AUTO_REPLY_MSG
@@ -434,7 +420,6 @@ Type *${PREFIX}settings* for feature status
 
             const command = commandRegistry.get(cmdName);
             if (command) {
-                // Let each command handle its own permission check
                 try {
                     await command.execute(sock, msg, {
                         from,
@@ -457,7 +442,7 @@ Type *${PREFIX}settings* for feature status
             console.error('Message Handler Error:', error);
         }
     });
-    
+
     return sock;
 }
 
@@ -468,18 +453,18 @@ async function loadAllSessions() {
     try {
         const db = mongoose.connection.db;
         const collection = db.collection('sessions');
-        
+
         const activeDocs = await collection.find({ id: { $regex: /_creds$/ } }).toArray();
-        
+
         const activeNumbers = activeDocs
             .map(doc => {
                 const match = doc.id.match(/^SESSION_(\d+)_creds$/);
                 return match ? match[1] : null;
             })
             .filter(Boolean);
-        
+
         console.log(chalk.cyan(`\n📱 Found ${activeNumbers.length} saved sessions\n`));
-        
+
         for (const number of activeNumbers) {
             console.log(chalk.yellow(`⚙️ Loading session: +${number}`));
             sessionManager.register(number, 'pending');
@@ -492,31 +477,29 @@ async function loadAllSessions() {
 }
 
 // ===============================
-// WEB ROUTING - FIXED POST HANDLER FOR RAW BASE64
+// WEB ROUTING - FIXED POST HANDLER
 // ===============================
 app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "pair.html"));
 });
 
-// FIXED: Accepts raw base64 session from pair.js
 app.post("/", async (req, res) => {
     try {
         const { session_id } = req.body;
-        
+
         console.log(chalk.yellow("📥 Received session submission..."));
-        
+
         if (!session_id) {
             return res.status(400).json({ success: false, error: "Session ID required" });
         }
-        
+
         if (!session_id.startsWith("ABDULLAH-MD!")) {
             return res.status(400).json({ success: false, error: "Invalid session format" });
         }
 
-        // Extract base64 data
         const base64Data = session_id.replace("ABDULLAH-MD!", "").trim();
         const credsJsonString = Buffer.from(base64Data, 'base64').toString('utf-8');
-        
+
         let creds;
         try {
             creds = JSON.parse(credsJsonString);
@@ -525,8 +508,7 @@ app.post("/", async (req, res) => {
             console.error("Parse Error:", parseErr);
             return res.status(400).json({ success: false, error: "Invalid session data" });
         }
-        
-        // Extract user number
+
         let userNumber = null;
         if (creds.me?.id) {
             userNumber = creds.me.id.split(':')[0].split('@')[0];
@@ -545,21 +527,22 @@ app.post("/", async (req, res) => {
         const collection = db.collection('sessions');
         const uniqueSessionId = `SESSION_${userNumber}`;
 
-        // Store creds
+        // 🧹 Clean up any document with number: null to avoid future index conflicts
+        await collection.deleteMany({ number: null });
+
+        // Store your custom tracking document (using 'id' field)
         await collection.findOneAndUpdate(
             { id: `${uniqueSessionId}_creds` },
             { $set: { data: JSON.stringify(creds), updatedAt: Date.now() } },
             { upsert: true }
         );
-        
-        // Store empty keys
+
         await collection.findOneAndUpdate(
             { id: `${uniqueSessionId}_keys` },
             { $set: { data: JSON.stringify({}), updatedAt: Date.now() } },
             { upsert: true }
         );
-        
-        // Store metadata
+
         await collection.findOneAndUpdate(
             { id: `${uniqueSessionId}_meta` },
             { $set: { userId: userNumber, createdAt: Date.now() } },
@@ -568,7 +551,6 @@ app.post("/", async (req, res) => {
 
         console.log(chalk.green(`✅ Session stored for +${userNumber}`));
 
-        // FIX: If session already running, disconnect it first to avoid WhatsApp conflict
         if (activeSessions.has(userNumber)) {
             console.log(chalk.yellow(`🔄 Old session found for +${userNumber}, disconnecting...`));
             try {
@@ -582,11 +564,11 @@ app.post("/", async (req, res) => {
 
         await sessionManager.register(userNumber, 'pending');
 
-        // Start new session
+        // ✅ Start session with the plain number (no prefix)
         startSession(userNumber).catch(err => console.error(err));
 
         return res.json({ success: true, message: `Session stored! Bot will connect as +${userNumber}` });
-        
+
     } catch (error) {
         console.error(chalk.red("❌ Error:"), error);
         return res.status(500).json({ success: false, error: error.message });
@@ -617,13 +599,13 @@ app.get("/api/stats", (req, res) => {
 // ===============================
 async function start() {
     await showUltimateBanner();
-    await connectDatabase(); 
+    await connectDatabase();
     await setupDirectories();
     await loadPlugins();
     await loadGroupSettings();
     await sessionManager.load();
     await loadAllSessions();
-    
+
     app.listen(PORT, () => {
         console.log(chalk.green(`\n✓ Server on port ${PORT}`));
         console.log(chalk.cyan(`✓ Pairing: Port:${PORT}/pair`));
